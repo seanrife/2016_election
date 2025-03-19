@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "sexism-potus-2016"
+version = "0.1.0"
+description = ""
+authors = ["Sean C. Rife <seanrife@gmail.com>"]
+readme = "README.md"
+packages = [{include = "sexism_potus_2016"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+diffusers = "^0.32.2"
+transformers = "^4.49.0"
+torch = "^2.6.0"
+datasets = "^3.4.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
