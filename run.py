@@ -2,18 +2,17 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipe
 import os
 import json
 
-
 model = AutoModelForSequenceClassification.from_pretrained('NLP-LTU/bertweet-large-sexism-detector')
-tokenizer = AutoTokenizer.from_pretrained('NLP-LTU/bertweet-large-sexism-detector') 
+tokenizer = AutoTokenizer.from_pretrained('NLP-LTU/bertweet-large-sexism-detector')
 classifier = pipeline("text-classification", model=model, tokenizer=tokenizer)
 
 predictions = []
 
-for file in os.listdir('/mnt/k/Datasets'):
+for file in os.listdir('/home/sean/2016_election'):
      if file.endswith(".json"):
         print(f"Processing {file}")
         # Read the text file
-        with open('/mnt/k/Datasets/'+file, 'r') as f:
+        with open('/home/sean/2016_election/'+file, 'r') as f:
             texts = []
             dates = []
             ids = []
@@ -52,7 +51,7 @@ for file in os.listdir('/mnt/k/Datasets'):
             print(len(coordinatess))
             print(len(places))
             predictions = classifier(texts, batch_size=256)
-        with open('/mnt/k/Datasets/' + file + '.tsv', 'w') as w:
+        with open('/home/sean/2016_election/' + file + '.tsv', 'w') as w:
             w.write("sexist\ttext\tdate\tids[i]\tname\tscreenname\tlocation\tfollowers\tstatuses\tgeo\tcoordinates\tplace\n")
             for i, record in enumerate(predictions):
                 sexist = 0

@@ -10,12 +10,12 @@ def retain_fields(dict_list, fields_to_retain):
     
     return result
 
-for file in os.listdir('/mnt/k/Datasets'):
+for file in os.listdir('/mnt/k/temp'):
 
     if file.endswith(".json"):
         print(f"Processing {file}")
         # Read the text file
-        with open(file, 'r') as f:
+        with open('/mnt/k/temp/' + file, 'r') as f:
             dict_string = f.read()
 
         # Parse the string

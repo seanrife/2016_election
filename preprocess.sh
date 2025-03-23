@@ -1,6 +1,6 @@
 
 # Directory containing the JSON files (you can adjust this as needed)
-directory="/mnt/k/Datasets"
+directory="/mnt/k/temp"
 
 # Iterate over all .json files in the specified directory
 for file in "$directory"/*.json; do
