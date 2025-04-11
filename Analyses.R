@@ -4,6 +4,8 @@ library(tidyverse)
 library(usmap)
 library(lme4)
 library(reshape2)
+library(svglite)
+library(ez)
 
 datadir <- '//wsl.localhost/Ubuntu/home/sean/2016_election/data/'
 filelist <- c('debate1-1.json.tsv', 'debate1-2.json.tsv', 'debate1-3.json.tsv', 'debate1-4.json.tsv', 'debate2-1.json.tsv', 'debate2-2.json.tsv', 'debate2-3.json.tsv', 'debate3-1.json.tsv', 'debate3-2.json.tsv', 'debate3-3.json.tsv', 'election1.json.tsv', 'election2.json.tsv', 'election3.json.tsv', 'election4.json.tsv')
@@ -62,20 +64,58 @@ summary(model)
 df_states <- dcast(wide_df, normalized_state ~ ., value.var = "perc_sexist", fun.aggregate = mean)
 colnames(df_states) <- c("state", "perc_sexist")
 
+df_election_results$perc_trump <- (df_election_results$POP_TRUMP/df_election_results$POP_TOTAL) * 100
+names(df_election_results)[1] <- 'state'
+df_election_results$normalized_state <- df_election_results$state
+wide_df <- merge(wide_df, df_election_results[, c("perc_trump", "normalized_state")], by = "normalized_state")
+
 map <- plot_usmap(
   color = "black", linewidth = 0.2,  data = df_states, values = "perc_sexist") +
   scale_fill_gradient(high = 'red', low = 'white') +
   theme(legend.position = "none")
 ggsave("us_map_sexism.svg", plot = map, width = 10, height = 7, dpi = 300)
 
+map <- plot_usmap(
+  color = "black", linewidth = 0.2,  data = df_election_results, values = "perc_trump") +
+  scale_fill_gradient(high = 'red', low = 'white') +
+  theme(legend.position = "none")
+ggsave("us_map_election.svg", plot = map, width = 10, height = 7, dpi = 300)
 
 df_events <- dcast(long_df, event ~ ., value.var = "value", fun.aggregate = function(x) mean(x, na.rm = TRUE))
 colnames(df_events)[colnames(df_events) == "."] <- "perc_sexist"
 df_events$perc_sexist <- df_events$perc_sexist * 100
 
-ggplot(df_events, aes(x = event, y = perc_sexist, group = 1)) +
-  geom_line(color = "blue", size = 1) +  # Line style
-  labs(title = "Sexism Over Time",
-       x = "Time Period",
-       y = "Sexism Level") +
-  theme_minimal()
+model <- lmer(perc_trump ~ perc_sexist + (1 | event) + (1 | normalized_state),
+              data = wide_df)
+summary(model)
+
+cor.test(wide_df$perc_trump, wide_df$perc_sexist)
+
+
+
+sexism_time_plot <- ggplot(wide_df, aes(x = event, y = perc_sexist, group = 1)) +
+  geom_boxplot(aes(group = event), alpha = 0.3, fill = "blue", outlier.shape = NA) +
+  geom_point(size = 1, color = "black", alpha = .1) +
+  labs(
+    title = "Sexist Tweets Over Time",
+    x = "Event",
+    y = "% Tweets Labeled Sexist"
+  ) +
+  theme(axis.text.x = element_text(angle=0), plot.title = element_text(hjust = 0.5)) +
+  scale_x_discrete(name ="\nEvent", labels=c("Debate 1\n(9/26)", "Debate 2\n(10/9)", "Debate 3\n(10/19)", "Election Night\n(11/8)"))
+ggsave("us_time_election.svg", plot = sexism_time_plot, width = 6, height = 4, dpi = 300)
+
+
+anova_results <- ezANOVA(
+  data = wide_df,
+  dv = perc_sexist,  # Dependent variable
+  wid = normalized_state,           # Within-subjects variable (user ID)
+  within = event,          # Repeated-measures factor
+  detailed = TRUE
+)
+summary(anova_results)
+anova_results
+
+model <- glmer(sexist ~ event + (1 | ID), 
+               data = df, 
+               family = binomial)
